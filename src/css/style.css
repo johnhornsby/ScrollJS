@@ -1,0 +1,151 @@
+#frame {
+	width:960px;
+	height:360px;
+	background-color:grey;
+	overflow:hidden;
+	position:relative;
+}
+#container {
+	position:relative;
+	left:0px;
+	top:0px;
+	width:2880px;
+	height:720px;
+}
+#container .item:nth-child(1) {
+	background-color:#F00;
+}
+#container .item:nth-child(2) {
+	background-color:#F90;
+}
+#container .item:nth-child(3) {
+	background-color:#FF0;
+}
+#container .item:nth-child(4) {
+	background-color:#6F0;
+}
+#container .item:nth-child(5) {
+	background-color:#0FF;
+}
+#container .item:nth-child(6) {
+	background-color:#06F;
+}
+
+.item {
+	float:left;
+	width:960px;
+	height:360px;
+	font-family:Arial, Helvetica, sans-serif;
+	font-size:72px;
+	text-align:center;
+	position:relative;
+	display:block;
+	background-color:#CF0;
+}
+
+#scroll-panel-thumb-horizontal{
+	margin-top:-14px;
+	width:960px;
+}
+
+.thumb-horizontal-frame{
+	width:100%;
+	height:14px;
+	position:absolute;
+	overflow:hidden;
+}
+.thumb-horizontal{
+	height:100%;
+	position:absolute;
+	top:0px;
+	left:0px;
+	cursor:pointer;
+	min-width:14px;
+}
+
+#scroll-panel-thumb-verticle{
+	margin-top:-360px;
+	margin-left:946px;
+	height:360px;
+}
+.thumb-verticle-frame{
+	height:100%;
+	width:14px;
+	position:absolute;
+	overflow:hidden;
+}
+.thumb-verticle{
+	width:100%;
+	position:absolute;
+	top:0px;
+	left:0px;
+	cursor:pointer;
+	min-height:14px;
+}
+
+.thumb-graphics{
+	background-color:black;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	bottom:2px;
+	left:2px;
+	top:2px;
+	right:2px;
+	position:absolute;
+	border:1px solid #CCC;
+	opacity:0.5;
+	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
+}
+
+
+#rotate360Frame {
+	width:595px;
+	height:442px;
+	background-color:grey;
+	overflow:hidden;
+	position:relative;	
+}
+
+
+#carousel-frame {
+	width:960px;
+	height:360px;
+	background-color:grey;
+	overflow:hidden;
+	position:relative;
+}
+
+#carousel-container {
+	position:relative;
+	left:0px;
+	top:0px;
+	width:5760px;
+	height:720px;
+}
+#carousel-container .item:nth-child(1) {
+	background-color:#F00;
+}
+#carousel-container .item:nth-child(2) {
+	background-color:#F90;
+}
+#carousel-container .item:nth-child(3) {
+	background-color:#FF0;
+}
+#carousel-container .item:nth-child(4) {
+	background-color:#6F0;
+}
+#carousel-container .item:nth-child(5) {
+	background-color:#0FF;
+}
+#carousel-container .item:nth-child(6) {
+	background-color:#06F;
+}
+#carousel-container .item:nth-child(7) {
+	background-color:#F00;
+}
+
+#output{
+	width:300px;
+	height:400px;
+}
