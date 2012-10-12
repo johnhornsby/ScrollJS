@@ -9,11 +9,16 @@ var ScrollPanelController = function(options){
 	this._frameHeight = options.frameHeight || 0;
 	this._frameWidth = options.frameWidth || 0;
 	this._shouldBounce = options.bounce || false;
+	this._shouldSnap = options.snap || false;
+	this._snapHeight = options.snapHeight || 0;
+	this._snapWidth = options.snapWidth || 0;
 	this._inputMultiplier = options.inputMultiplier || 1;
 	this._wrap = options.wrap || false;
 	this._maxScrollDistanceX = this._contentWidth - this._frameWidth;
 	this._maxScrollDistanceY = this._contentHeight - this._frameHeight;
 	
+	this._tweenX;
+	this._tweenY;
 	
 	this._isDragging = false;
 	this._isStopChildMouseUp = false;
@@ -67,31 +72,94 @@ ScrollPanelController.prototype._init = function(){
 ScrollPanelController.prototype._initInertiaAnimation = function(finalLeftDelta, finalTopDelta){
 	this._inertiaX = finalLeftDelta;
 	this._inertiaY = finalTopDelta;
-	this._inertiaInterval = setInterval(this._updateInertiaAnimation.context(this),33);
+	
+	if(this._shouldSnap === true){
+		//here we need to predict the final position, then animate to that position manually
+		var predictedInertiaAnimationData = this._predictCompletedInertiaAnimation(this._x, this._y, this._inertiaX, this._inertiaY);
+		var snappedToAnimationData = this._determinSnapedToDestination(predictedInertiaAnimationData);
+		this._tweenX = this._x;
+		this._tweenY = this._y;
+		Animator.addTween(this,{time:1,_tweenX:snappedToAnimationData.x,_tweenY:predictedInertiaAnimationData.y,onUpdate:this._tweenUpdate.context(this),onComplete:this._tweenComplete.context(this)})
+	}else {
+		this._inertiaInterval = setInterval(this._updateInertiaAnimation.context(this),33);
+	}
 	this._isAnimating = true;
 };
+
+ScrollPanelController.prototype._tweenUpdate = function(){
+	console.log(this._tweenX);
+	this._setScrollPosition(this._tweenX,this._tweenY);
+}
+
+ScrollPanelController.prototype._tweenComplete = function(){
+	this._isAnimating = false;
+}
+
+
+ScrollPanelController.prototype._determinSnapedToDestination = function(inertiaAnimationData){
+	var maxScrollDistanceX = this._maxScrollDistanceX * -1;
+	var a = inertiaAnimationData.x / -960;
+	var b = Math.round(a);
+	var c = b * -960;
+	inertiaAnimationData.x = c;
+	return inertiaAnimationData;
+}
+
+ScrollPanelController.prototype._predictCompletedInertiaAnimation = function(x, y, xInertia, yInertia){
+	var d; //inertiaAnimationData
+	var shouldAnimate = true;
+	var emergencyEscapeLoops = 100;
+	while(shouldAnimate === true && emergencyEscapeLoops !== 0){
+		d = this._calculateInertiaAnimation(x, y, xInertia, yInertia);
+		//need to retain the inertia values to use again for next update of the inertia
+		x = d.x;
+		y = d.y;
+		xInertia = d.xInertia;//set inertia back into property, bit of a workaround for using a method for both dimensions
+		yInertia = d.yInertia;//set inertia back into property, bit of a workaround for using a method for both dimensions
+		//console.log("x="+d.x+" y:"+d.y+" xInertia:"+d.xInertia+" yInertia:"+d.yInertia);
+		if((d.xVelocity < 0.05 && d.xVelocity > -0.05) && (d.xBoundryModifier < 0.05 && d.xBoundryModifier > -0.05) && (d.yVelocity < 0.05 && d.yVelocity > -0.05) && (d.yBoundryModifier < 0.05 && d.yBoundryModifier > -0.05)){
+			shouldAnimate = false;
+			//console.log("completed x:"+d.x+" completed y:"+d.y);
+		}
+		if(emergencyEscapeLoops===0){
+			shouldAnimate = false;
+			console.log("HELP emergencyEscapeLoops===0");
+		}
+		emergencyEscapeLoops--;
+	}
+	return d;
+}
 
 ScrollPanelController.prototype._updateInertiaAnimation = function(){
 	//Globals.log("_updateInertiaAnimation");
 	if(this._isAnimating===false)return;
-	
-	var yInertiaProperties = this._performDimensionalInertiaCalculations(this._maxScrollDistanceY, this._y, this._inertiaY);
-	this._inertiaY = yInertiaProperties.inertia;	//set inertia back into property, bit of a workaround for using a method for both dimensions
-	
-	var xInertiaProperties = this._performDimensionalInertiaCalculations(this._maxScrollDistanceX, this._x, this._inertiaX);
-	this._inertiaX = xInertiaProperties.inertia;	//set inertia back into property, bit of a workaround for using a method for both dimensions
-	
-	var x = this._resolveScrollDeltaX(xInertiaProperties.velocity,!this._shouldBounce, false);
-	var y = this._resolveScrollDeltaY(yInertiaProperties.velocity,!this._shouldBounce, false);
-	this._setScrollPosition(x, y);
-	
-	
-	if((xInertiaProperties.velocity < 0.05 && xInertiaProperties.velocity > -0.05) && (xInertiaProperties.boundryModifier < 0.05 && xInertiaProperties.boundryModifier > -0.05) && (yInertiaProperties.velocity < 0.05 && yInertiaProperties.velocity > -0.05) && (yInertiaProperties.boundryModifier < 0.05 && yInertiaProperties.boundryModifier > -0.05)){
+
+	var d = this._calculateInertiaAnimation(this._x, this._y, this._inertiaX, this._inertiaY); //inertiaAnimationData
+	//need to retain the inertia values to use again for next update of the inertia
+	this._inertiaX = d.xInertia;//set inertia back into property, bit of a workaround for using a method for both dimensions
+	this._inertiaY = d.yInertia;//set inertia back into property, bit of a workaround for using a method for both dimensions
+	//console.log("x="+d.x+" y:"+d.y+" xInertia:"+d.xInertia+" yInertia:"+d.yInertia);
+	this._setScrollPosition(d.x, d.y);
+
+	if((d.xVelocity < 0.05 && d.xVelocity > -0.05) && (d.xBoundryModifier < 0.05 && d.xBoundryModifier > -0.05) && (d.yVelocity < 0.05 && d.yVelocity > -0.05) && (d.yBoundryModifier < 0.05 && d.yBoundryModifier > -0.05)){
 		this._stopTweenAnimation();
+		console.log("really completed x:"+d.x+" really completed y:"+d.y);
 	}
 }
 
+ScrollPanelController.prototype._calculateInertiaAnimation = function(x, y, xInertia, yInertia){
+	var xInertiaProperties = this._performDimensionalInertiaCalculations(this._maxScrollDistanceX, x, xInertia);
+	xInertia = xInertiaProperties.inertia;	//set inertia back into property, bit of a workaround for using a method for both dimensions
+	var yInertiaProperties = this._performDimensionalInertiaCalculations(this._maxScrollDistanceY, y, yInertia);
+	yInertia = yInertiaProperties.inertia;	//set inertia back into property, bit of a workaround for using a method for both dimensions
+	x = this._resolveScrollDelta(xInertiaProperties.velocity,!this._shouldBounce, false, x, "_inertiaX", this._maxScrollDistanceX);
+	y = this._resolveScrollDelta(yInertiaProperties.velocity,!this._shouldBounce, false, y, "_inertiaY", this._maxScrollDistanceY);
+	return {x:x, y:y, xInertia:xInertia, yInertia:yInertia, xVelocity:xInertiaProperties.velocity, yVelocity:yInertiaProperties.velocity, xBoundryModifier:xInertiaProperties.boundryModifier, yBoundryModifier:yInertiaProperties.boundryModifier};
+}
 
+/**
+	return data used for delta due to previous interia value
+**/
 ScrollPanelController.prototype._performDimensionalInertiaCalculations = function(maxScrollDistance, containerPosition, inertia){
 	var boundryModifier = 0;
 	var ammountIntoBoundry = 0;
@@ -150,6 +218,9 @@ ScrollPanelController.prototype._resolveScrollDeltaX = function(delta,constrainT
 	return this._resolveScrollDelta(delta,constrainToFrame, applyDrag, this._x, "_inertiaX", this._maxScrollDistanceX);
 };
 
+/**
+ return final position from passed in delta, this can be modified and corrected due to wrapping and constaint to frame and being outside of boundry
+**/
 ScrollPanelController.prototype._resolveScrollDelta = function(delta, constrainToFrame, applyDrag, position, inertiaPropertyName, maxScrollDistance){
 	var x = position;
 	var right = 0;
@@ -296,6 +367,7 @@ ScrollPanelController.prototype.singleClick = function(x,y){
 ScrollPanelController.prototype.mouseDown = function(deltaX,deltaY,x,y) {
 	//this.output("mouseDown dx:"+deltaX+" dy:"+deltaY);
 	this._stopTweenAnimation();
+	Animator.removeTween(this);
 };
 
 ScrollPanelController.prototype.dragMove = function(deltaX,deltaY,x,y){

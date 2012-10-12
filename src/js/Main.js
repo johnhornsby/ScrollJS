@@ -24,6 +24,13 @@ $(document).ready(function(){
 				scrollDirection:ScrollPanelController.SCROLL_DIRECTION_HORIZONTAL
 			};
 			var carouselViewController = new CarouselViewController(options);
+
+			var options = {
+				frameElement:$('#carousel-snap-frame').get(0),
+				contentElement:$('#carousel-snap-container').get(0),
+				scrollDirection:ScrollPanelController.SCROLL_DIRECTION_HORIZONTAL
+			};
+			var carouselSnapViewController = new CarouselSnapViewController(options);
 			
 			
 		}
