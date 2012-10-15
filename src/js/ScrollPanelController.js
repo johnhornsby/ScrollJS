@@ -10,8 +10,8 @@ var ScrollPanelController = function(options){
 	this._frameWidth = options.frameWidth || 0;
 	this._shouldBounce = options.bounce || false;
 	this._shouldSnap = options.snap || false;
-	this._snapHeight = options.snapHeight || 0;
-	this._snapWidth = options.snapWidth || 0;
+	this._snapHeight = options.snapHeight || this._frameHeight;
+	this._snapWidth = options.snapWidth || this._frameWidth;
 	this._inputMultiplier = options.inputMultiplier || 1;
 	this._wrap = options.wrap || false;
 	this._maxScrollDistanceX = this._contentWidth - this._frameWidth;
@@ -95,7 +95,7 @@ ScrollPanelController.prototype._tweenComplete = function(){
 	this._isAnimating = false;
 }
 
-
+/*
 ScrollPanelController.prototype._determinSnapedToDestination = function(inertiaAnimationData){
 	var maxScrollDistanceX = this._maxScrollDistanceX * -1;
 	var a = inertiaAnimationData.x / -960;
@@ -104,6 +104,21 @@ ScrollPanelController.prototype._determinSnapedToDestination = function(inertiaA
 	inertiaAnimationData.x = c;
 	return inertiaAnimationData;
 }
+*/
+ScrollPanelController.prototype._determinSnapedToDestination = function(inertiaAnimationData){
+	var xSnapInverted = this._snapWidth * -1
+	var x1 = inertiaAnimationData.x / xSnapInverted;
+	var x2 = Math.round(x1);
+	var x3 = x2 * xSnapInverted;
+	inertiaAnimationData.x = x3;
+	var ySnapInverted = this._snapHeight * -1;
+	var y1 = inertiaAnimationData.y / ySnapInverted;
+	var y2 = Math.round(y1);
+	var y3 = y2 * ySnapInverted;
+	inertiaAnimationData.y = y3;
+	return inertiaAnimationData;
+}
+
 
 ScrollPanelController.prototype._predictCompletedInertiaAnimation = function(x, y, xInertia, yInertia){
 	var d; //inertiaAnimationData
